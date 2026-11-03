@@ -3,30 +3,31 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Com3_2.1</title>
+    <title>Com3_2.2 - Zestawy Danych NOAA</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
 <div id="container">
-    <h1>Stacje meteoroligczne</h1>
-    <div class="config-grid"></div>
-    <input type="text" id="token-input" placeholder="Token" value="">
-    <input type="text" id="proxy-input" placeholder="Adres Proxy " value="http://localhost:3000/api/noaa/">
-    <button id="fetch-btn">Pobierz stacje</button>
-</div>    
+    <h1>Zestawy Danych Klimatycznych (Datasets)</h1>
+    <div class="config-grid">
+        <input type="text" id="token-input" placeholder="Wklej Token NOAA" value="">
+        <input type="text" id="proxy-input" placeholder="Adres Proxy" value="http://localhost:3000/api/noaa/">
+        <button id="fetch-btn">Pobierz zestawy danych</button>
+    </div>
 
-<div id="status-box" class="status"></div>
+    <div id="status-box" class="status" style="display: none;"></div>
 
-    <table id="stations-table" style="display: none;">
+    <table id="datasets-table" style="display: none;">
       <thead>
         <tr>
-          <th>Station ID</th>
-          <th>Name</th>
-          <th>Latitude</th>
-          <th>Longitude</th>
+          <th>ID Zestawu</th>
+          <th>Nazwa</th>
+          <th>Od</th>
+          <th>Do</th>
+          <th>Pokrycie (Coverage)</th>
         </tr>
       </thead>
-      <tbody id="stations-tbody"></tbody>
+      <tbody id="datasets-tbody"></tbody>
     </table>
 </div>
 
@@ -35,10 +36,10 @@
     const proxyInput = document.getElementById('proxy-input');
     const fetchBtn = document.getElementById('fetch-btn');
     const statusBox = document.getElementById('status-box');
-    const table = document.getElementById('stations-table');
-    const tbody = document.getElementById('stations-tbody');
+    const table = document.getElementById('datasets-table');
+    const tbody = document.getElementById('datasets-tbody');
 
-     function setStatus(type, message) {
+    function setStatus(type, message) {
       if (!type) {
         statusBox.style.display = 'none';
         statusBox.className = 'status';
@@ -62,8 +63,8 @@
         baseUrl += '/';
       }
 
-      const requestUrl = `${baseUrl}stations?limit=50`;
-      setStatus('loading', 'Pobieranie stacji meteorologicznych z serwera...');
+      const requestUrl = `${baseUrl}datasets?limit=50`;
+      setStatus('loading', 'Pobieranie zestawów danych z NOAA...');
       tbody.innerHTML = '';
       table.style.display = 'none';
 
@@ -84,45 +85,42 @@
         }
 
         const data = await response.json();
-        const stations = data.results;
+        const datasets = data.results;
 
-        if (!Array.isArray(stations) || stations.length === 0) {
-          setStatus('empty', 'Brak stacji w zwróconej odpowiedzi.');
+        if (!Array.isArray(datasets) || datasets.length === 0) {
+          setStatus('empty', 'Brak zestawów danych w zwróconej odpowiedzi.');
           return;
         }
 
         setStatus(null);
         table.style.display = 'table';
 
-        stations.forEach(station => {
+        datasets.forEach(ds => {
           const row = document.createElement('tr');
 
           const idCell = document.createElement('td');
-          idCell.textContent = station.id || 'Brak ID';
+          idCell.textContent = ds.id || 'Brak ID';
 
           const nameCell = document.createElement('td');
-          nameCell.textContent = station.name || 'Brak nazwy';
+          nameCell.textContent = ds.name || 'Brak nazwy';
 
-          const latCell = document.createElement('td');
-          latCell.textContent = station.latitude !== undefined ? station.latitude : 'N/A';
+          const minDateCell = document.createElement('td');
+          minDateCell.textContent = ds.mindate || 'N/A';
 
-          const lonCell = document.createElement('td');
-          lonCell.textContent = station.longitude !== undefined ? station.longitude : 'N/A';
+          const maxDateCell = document.createElement('td');
+          maxDateCell.textContent = ds.maxdate || 'N/A';
 
-          row.append(idCell, nameCell, latCell, lonCell);
+          const coverageCell = document.createElement('td');
+          coverageCell.textContent = ds.datacoverage !== undefined ? `${(ds.datacoverage * 100).toFixed(0)}%` : 'N/A';
+
+          row.append(idCell, nameCell, minDateCell, maxDateCell, coverageCell);
           tbody.appendChild(row);
         });
 
       } catch (err) {
-        setStatus('error', `Błąd pobierania danych: ${err.message}. Upewnij się, że proxy Express działa na wskazanym porcie.`);
+        setStatus('error', `Błąd: ${err.message}. Upewnij się, że Express proxy działa.`);
       }
     });
-
-
 </script>
-
-
-
-
 </body>
 </html>

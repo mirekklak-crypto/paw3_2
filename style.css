@@ -9,6 +9,7 @@
   --border-light: #475569;
 }
 
+/* 1. Poprawiony selektor uniwersalny (było "- {") */
 * {
   box-sizing: border-box;
   margin: 0;
@@ -24,7 +25,7 @@ body {
 }
 
 #container {
-  max-width: 1000px;
+  max-width: 1050px;
   margin: 0 auto;
   background: var(--card-bg);
   padding: 32px;
@@ -74,6 +75,7 @@ h1 {
   font-size: 1rem;
   font-weight: 600;
   cursor: pointer;
+  white-space: nowrap;
   transition: background-color 0.2s, transform 0.05s;
 }
 
@@ -111,63 +113,88 @@ h1 {
   border: 1px solid #dc2626;
 }
 
-/* Tabela stacji meteorologicznych */
-#stations-table {
+/* 2. Style wspólne dla tabel (#stations-table oraz #datasets-table) */
+#stations-table,
+#datasets-table {
   width: 100%;
   border-collapse: collapse;
   text-align: left;
-  margin-top: 8px;
+  margin-top: 16px;
 }
 
 #stations-table th,
-#stations-table td {
-  padding: 12px 16px;
+#stations-table td,
+#datasets-table th,
+#datasets-table td {
+  padding: 12px 14px;
   border-bottom: 1px solid var(--border-color);
+  vertical-align: middle;
 }
 
-#stations-table th {
+#stations-table th,
+#datasets-table th {
   background-color: #172033;
   color: var(--text-muted);
   font-weight: 600;
   font-size: 0.85rem;
   text-transform: uppercase;
   letter-spacing: 0.05em;
+  border-top: 1px solid var(--border-color);
 }
 
-#stations-table tbody tr:hover {
+#stations-table tbody tr:hover,
+#datasets-table tbody tr:hover {
   background-color: #243048;
 }
 
-#stations-table td {
-  font-size: 0.95rem;
+#stations-table td,
+#datasets-table td {
+  font-size: 0.92rem;
 }
 
-#stations-table td:first-child {
+/* Pierwsza kolumna (ID) */
+#stations-table td:first-child,
+#datasets-table td:first-child {
   font-family: monospace;
+  font-weight: 600;
   color: #38bdf8;
+  white-space: nowrap;
+}
+
+/* Formatowanie dat i pokrycia dla datasets */
+#datasets-table td:nth-child(3),
+#datasets-table td:nth-child(4) {
+  font-family: monospace;
+  color: #cbd5e1;
+  white-space: nowrap;
+}
+
+#datasets-table td:nth-child(5) {
+  font-weight: 600;
+  color: #34d399;
 }
 
 /* Responsywność */
 @media (min-width: 768px) {
   .config-grid {
     display: grid;
-    grid-template-columns: 1fr 1fr auto;
+    grid-template-columns: 1fr 1.2fr auto;
     align-items: center;
   }
 }
 
-@media (max-width: 640px) {
+@media (max-width: 768px) {
   body {
     padding: 16px;
   }
 
   #container {
     padding: 18px;
+    overflow-x: auto;
   }
 
-  #stations-table {
-    display: block;
-    overflow-x: auto;
-    white-space: nowrap;
+  #stations-table,
+  #datasets-table {
+    min-width: 600px;
   }
 }

@@ -10,8 +10,8 @@ app.use(cors());
 // Serwowanie plików HTML/CSS/JS z bieżącego katalogu
 app.use(express.static(__dirname));
 
-// Endpoint pośredniczący do NOAA CDO API
-app.get('/api/noaa/stations', async (req, res) => {
+// Endpoint proxy dla /datasets
+app.get('/api/noaa/datasets', async (req, res) => {
   const token = req.headers['token'];
   const limit = req.query.limit || 50;
 
@@ -20,7 +20,7 @@ app.get('/api/noaa/stations', async (req, res) => {
   }
 
   try {
-    const response = await fetch(`https://www.ncei.noaa.gov/cdo-web/api/v2/stations?limit=${limit}`, {
+    const response = await fetch(`https://www.ncei.noaa.gov/cdo-web/api/v2/datasets?limit=${limit}`, {
       headers: { token }
     });
 
