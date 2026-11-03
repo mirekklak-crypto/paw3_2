@@ -1,126 +1,192 @@
 <!DOCTYPE html>
 <html lang="pl">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Com3_2.2 - Zestawy Danych NOAA</title>
-    <link rel="stylesheet" href="style.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Com3_2.3 - Pomiary Klimatyczne NOAA (/data)</title>
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
 <div id="container">
-    <h1>Zestawy Danych Klimatycznych (Datasets)</h1>
-    <div class="config-grid">
-        <input type="text" id="token-input" placeholder="Wklej Token NOAA" value="">
-        <input type="text" id="proxy-input" placeholder="Adres Proxy" value="http://localhost:3000/api/noaa/">
-        <button id="fetch-btn">Pobierz zestawy danych</button>
+  <h1>Pomiary Klimatyczne NOAA (/data)</h1>
+
+  <!-- Sekcja konfiguracyjna -->
+  <div class="config-grid">
+    <div class="form-group">
+      <label for="token-input">Token NOAA CDO</label>
+      <input type="text" id="token-input" placeholder="Wklej token">
     </div>
 
-    <div id="status-box" class="status" style="display: none;"></div>
+    <div class="form-group">
+      <label for="proxy-input">Adres Proxy</label>
+      <input type="text" id="proxy-input" value="http://localhost:3000/api/noaa/data">
+    </div>
 
-    <table id="datasets-table" style="display: none;">
-      <thead>
-        <tr>
-          <th>ID Zestawu</th>
-          <th>Nazwa</th>
-          <th>Od</th>
-          <th>Do</th>
-          <th>Pokrycie (Coverage)</th>
-        </tr>
-      </thead>
-      <tbody id="datasets-tbody"></tbody>
-    </table>
+    <div class="form-group">
+      <label for="dataset-input">Dataset ID</label>
+      <input type="text" id="dataset-input" value="GHCND" placeholder="np. GHCND">
+    </div>
+
+    <div class="form-group">
+      <label for="location-input">Location ID</label>
+      <input type="text" id="location-input" value="ZIP:28801" placeholder="np. ZIP:28801">
+    </div>
+
+    <div class="form-group">
+      <label for="datatype-input">Datatype ID (opcjonalne)</label>
+      <input type="text" id="datatype-input" placeholder="np. TMAX, PRCP (puste = wszystkie)">
+    </div>
+
+    <div class="form-group">
+      <label for="startdate-input">Data początkowa</label>
+      <input type="date" id="startdate-input" value="2010-05-01">
+    </div>
+
+    <div class="form-group">
+      <label for="enddate-input">Data końcowa</label>
+      <input type="date" id="enddate-input" value="2010-05-01">
+    </div>
+
+    <div class="form-group button-group">
+      <button id="fetch-btn">Pobierz pomiary</button>
+    </div>
+  </div>
+
+  <div id="status-box" class="status" style="display: none;"></div>
+
+  <table id="measurements-table" style="display: none;">
+    <thead>
+      <tr>
+        <th>Data</th>
+        <th>Typ pomiaru (Datatype)</th>
+        <th>Wartość</th>
+        <th>Stacja</th>
+        <th>Atrybuty</th>
+      </tr>
+    </thead>
+    <tbody id="measurements-tbody"></tbody>
+  </table>
 </div>
 
 <script>
-    const tokenInput = document.getElementById('token-input');
-    const proxyInput = document.getElementById('proxy-input');
-    const fetchBtn = document.getElementById('fetch-btn');
-    const statusBox = document.getElementById('status-box');
-    const table = document.getElementById('datasets-table');
-    const tbody = document.getElementById('datasets-tbody');
+  const tokenInput = document.getElementById('token-input');
+  const proxyInput = document.getElementById('proxy-input');
+  const datasetInput = document.getElementById('dataset-input');
+  const locationInput = document.getElementById('location-input');
+  const datatypeInput = document.getElementById('datatype-input');
+  const startDateInput = document.getElementById('startdate-input');
+  const endDateInput = document.getElementById('enddate-input');
 
-    function setStatus(type, message) {
-      if (!type) {
-        statusBox.style.display = 'none';
-        statusBox.className = 'status';
-        return;
-      }
-      statusBox.className = `status ${type}`;
-      statusBox.textContent = message;
-      statusBox.style.display = 'block';
+  const fetchBtn = document.getElementById('fetch-btn');
+  const statusBox = document.getElementById('status-box');
+  const table = document.getElementById('measurements-table');
+  const tbody = document.getElementById('measurements-tbody');
+
+  function setStatus(type, message) {
+    if (!type) {
+      statusBox.style.display = 'none';
+      statusBox.className = 'status';
+      return;
+    }
+    statusBox.className = `status ${type}`;
+    statusBox.textContent = message;
+    statusBox.style.display = 'block';
+  }
+
+  fetchBtn.addEventListener('click', async () => {
+    const token = tokenInput.value.trim();
+    const proxyUrl = proxyInput.value.trim();
+    const datasetid = datasetInput.value.trim();
+    const locationid = locationInput.value.trim();
+    const datatypeid = datatypeInput.value.trim();
+    const startdate = startDateInput.value;
+    const enddate = endDateInput.value;
+
+    if (!token) {
+      setStatus('error', 'Wprowadź wymagany token NOAA CDO.');
+      return;
     }
 
-    fetchBtn.addEventListener('click', async () => {
-      const token = tokenInput.value.trim();
-      let baseUrl = proxyInput.value.trim();
+    if (!datasetid || !startdate || !enddate) {
+      setStatus('error', 'Pola Dataset ID, Data początkowa oraz Data końcowa są wymagane.');
+      return;
+    }
 
-      if (!token) {
-        setStatus('error', 'Wprowadź wymagany token NOAA CDO.');
+    // Budowanie parametrów zapytania
+    const params = new URLSearchParams({
+      datasetid: datasetid,
+      startdate: startdate,
+      enddate: enddate,
+      limit: 100
+    });
+
+    if (locationid) {
+      params.append('locationid', locationid);
+    }
+    if (datatypeid) {
+      params.append('datatypeid', datatypeid);
+    }
+
+    const requestUrl = `${proxyUrl}?${params.toString()}`;
+
+    setStatus('loading', 'Wysyłanie zapytania i pobieranie danych pomiarowych...');
+    tbody.innerHTML = '';
+    table.style.display = 'none';
+
+    try {
+      const response = await fetch(requestUrl, {
+        method: 'GET',
+        headers: {
+          'token': token
+        }
+      });
+
+      if (response.status === 401) {
+        throw new Error('401 Unauthorized: Błędny lub nieaktywny token NOAA.');
+      }
+
+      if (!response.ok) {
+        throw new Error(`Błąd HTTP ${response.status}: ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      const results = data.results;
+
+      if (!Array.isArray(results) || results.length === 0) {
+        setStatus('empty', 'Brak wyników pomiarowych dla podanych kryteriów filtrowania.');
         return;
       }
 
-      if (!baseUrl.endsWith('/')) {
-        baseUrl += '/';
-      }
+      setStatus(null);
+      table.style.display = 'table';
 
-      const requestUrl = `${baseUrl}datasets?limit=50`;
-      setStatus('loading', 'Pobieranie zestawów danych z NOAA...');
-      tbody.innerHTML = '';
-      table.style.display = 'none';
+      results.forEach(item => {
+        const row = document.createElement('tr');
 
-      try {
-        const response = await fetch(requestUrl, {
-          method: 'GET',
-          headers: {
-            'token': token
-          }
-        });
+        // Sformatowanie daty (usunięcie części godzinowej jeśli występuje)
+        const dateCell = document.createElement('td');
+        dateCell.textContent = item.date ? item.date.split('T')[0] : 'N/A';
 
-        if (response.status === 401) {
-          throw new Error('401 Unauthorized: Błędny lub nieaktywny token NOAA.');
-        }
+        const typeCell = document.createElement('td');
+        typeCell.textContent = item.datatype || 'N/A';
 
-        if (!response.ok) {
-          throw new Error(`Błąd HTTP ${response.status}: ${response.statusText}`);
-        }
+        const valCell = document.createElement('td');
+        valCell.textContent = item.value !== undefined ? item.value : 'N/A';
 
-        const data = await response.json();
-        const datasets = data.results;
+        const stationCell = document.createElement('td');
+        stationCell.textContent = item.station || 'N/A';
 
-        if (!Array.isArray(datasets) || datasets.length === 0) {
-          setStatus('empty', 'Brak zestawów danych w zwróconej odpowiedzi.');
-          return;
-        }
+        const attrCell = document.createElement('td');
+        attrCell.textContent = item.attributes || '-';
 
-        setStatus(null);
-        table.style.display = 'table';
+        row.append(dateCell, typeCell, valCell, stationCell, attrCell);
+        tbody.appendChild(row);
+      });
 
-        datasets.forEach(ds => {
-          const row = document.createElement('tr');
-
-          const idCell = document.createElement('td');
-          idCell.textContent = ds.id || 'Brak ID';
-
-          const nameCell = document.createElement('td');
-          nameCell.textContent = ds.name || 'Brak nazwy';
-
-          const minDateCell = document.createElement('td');
-          minDateCell.textContent = ds.mindate || 'N/A';
-
-          const maxDateCell = document.createElement('td');
-          maxDateCell.textContent = ds.maxdate || 'N/A';
-
-          const coverageCell = document.createElement('td');
-          coverageCell.textContent = ds.datacoverage !== undefined ? `${(ds.datacoverage * 100).toFixed(0)}%` : 'N/A';
-
-          row.append(idCell, nameCell, minDateCell, maxDateCell, coverageCell);
-          tbody.appendChild(row);
-        });
-
-      } catch (err) {
-        setStatus('error', `Błąd: ${err.message}. Upewnij się, że Express proxy działa.`);
-      }
-    });
+    } catch (err) {
+      setStatus('error', `Błąd: ${err.message}. Sprawdź poprawność parametrów lub stan serwera.`);
+    }
+  });
 </script>
 </body>
 </html>

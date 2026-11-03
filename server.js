@@ -7,20 +7,20 @@ const PORT = 3000;
 
 app.use(cors());
 
-// Serwowanie plików HTML/CSS/JS z bieżącego katalogu
 app.use(express.static(__dirname));
 
-// Endpoint proxy dla /datasets
-app.get('/api/noaa/datasets', async (req, res) => {
+app.get('/api/noaa/data', async (req, res) => {
   const token = req.headers['token'];
-  const limit = req.query.limit || 50;
 
   if (!token) {
     return res.status(400).json({ error: 'Brak nagłówka token' });
   }
 
+  const queryString = new URLSearchParams(req.query).toString();
+  const targetUrl = `https://www.ncei.noaa.gov/cdo-web/api/v2/data?${queryString}`;
+
   try {
-    const response = await fetch(`https://www.ncei.noaa.gov/cdo-web/api/v2/datasets?limit=${limit}`, {
+    const response = await fetch(targetUrl, {
       headers: { token }
     });
 
