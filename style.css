@@ -1,0 +1,173 @@
+:root {
+  --primary-color: #0284c7;
+  --primary-hover: #0369a1;
+  --bg-color: #0f172a;
+  --card-bg: #1e293b;
+  --text-main: #f8fafc;
+  --text-muted: #94a3b8;
+  --border-color: #334155;
+  --border-light: #475569;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  background-color: var(--bg-color);
+  color: var(--text-main);
+  line-height: 1.5;
+  padding: 40px 20px;
+}
+
+#container {
+  max-width: 1000px;
+  margin: 0 auto;
+  background: var(--card-bg);
+  padding: 32px;
+  border-radius: 12px;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.4);
+  border: 1px solid var(--border-color);
+}
+
+h1 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin-bottom: 24px;
+  color: #e2e8f0;
+}
+
+/* Panel konfiguracyjny (token, URL proxy, przycisk) */
+.config-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.config-grid input {
+  padding: 11px 14px;
+  font-size: 0.95rem;
+  background-color: #0f172a;
+  color: #f8fafc;
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  font-family: monospace;
+}
+
+.config-grid input:focus {
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 3px rgba(2, 132, 199, 0.25);
+}
+
+.config-grid button {
+  background-color: var(--primary-color);
+  color: #ffffff;
+  border: none;
+  border-radius: 6px;
+  padding: 12px 24px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s, transform 0.05s;
+}
+
+.config-grid button:hover {
+  background-color: var(--primary-hover);
+}
+
+.config-grid button:active {
+  transform: scale(0.99);
+}
+
+/* Komunikaty statusu */
+.status {
+  padding: 12px 16px;
+  border-radius: 6px;
+  margin-bottom: 24px;
+  font-size: 0.95rem;
+}
+
+.status.loading {
+  background-color: rgba(2, 132, 199, 0.15);
+  color: #38bdf8;
+  border: 1px solid #0284c7;
+}
+
+.status.empty {
+  background-color: rgba(217, 119, 6, 0.15);
+  color: #fbbf24;
+  border: 1px solid #d97706;
+}
+
+.status.error {
+  background-color: rgba(220, 38, 38, 0.15);
+  color: #f87171;
+  border: 1px solid #dc2626;
+}
+
+/* Tabela stacji meteorologicznych */
+#stations-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+  margin-top: 8px;
+}
+
+#stations-table th,
+#stations-table td {
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border-color);
+}
+
+#stations-table th {
+  background-color: #172033;
+  color: var(--text-muted);
+  font-weight: 600;
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+#stations-table tbody tr:hover {
+  background-color: #243048;
+}
+
+#stations-table td {
+  font-size: 0.95rem;
+}
+
+#stations-table td:first-child {
+  font-family: monospace;
+  color: #38bdf8;
+}
+
+/* Responsywność */
+@media (min-width: 768px) {
+  .config-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr auto;
+    align-items: center;
+  }
+}
+
+@media (max-width: 640px) {
+  body {
+    padding: 16px;
+  }
+
+  #container {
+    padding: 18px;
+  }
+
+  #stations-table {
+    display: block;
+    overflow-x: auto;
+    white-space: nowrap;
+  }
+}

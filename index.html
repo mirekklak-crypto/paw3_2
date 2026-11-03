@@ -3,9 +3,126 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
+    <title>Com3_2.1</title>
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    
+<div id="container">
+    <h1>Stacje meteoroligczne</h1>
+    <div class="config-grid"></div>
+    <input type="text" id="token-input" placeholder="Token" value="">
+    <input type="text" id="proxy-input" placeholder="Adres Proxy " value="http://localhost:3000/api/noaa/">
+    <button id="fetch-btn">Pobierz stacje</button>
+</div>    
+
+<div id="status-box" class="status"></div>
+
+    <table id="stations-table" style="display: none;">
+      <thead>
+        <tr>
+          <th>Station ID</th>
+          <th>Name</th>
+          <th>Latitude</th>
+          <th>Longitude</th>
+        </tr>
+      </thead>
+      <tbody id="stations-tbody"></tbody>
+    </table>
+</div>
+
+<script>
+    const tokenInput = document.getElementById('token-input');
+    const proxyInput = document.getElementById('proxy-input');
+    const fetchBtn = document.getElementById('fetch-btn');
+    const statusBox = document.getElementById('status-box');
+    const table = document.getElementById('stations-table');
+    const tbody = document.getElementById('stations-tbody');
+
+     function setStatus(type, message) {
+      if (!type) {
+        statusBox.style.display = 'none';
+        statusBox.className = 'status';
+        return;
+      }
+      statusBox.className = `status ${type}`;
+      statusBox.textContent = message;
+      statusBox.style.display = 'block';
+    }
+
+    fetchBtn.addEventListener('click', async () => {
+      const token = tokenInput.value.trim();
+      let baseUrl = proxyInput.value.trim();
+
+      if (!token) {
+        setStatus('error', 'Wprowadź wymagany token NOAA CDO.');
+        return;
+      }
+
+      if (!baseUrl.endsWith('/')) {
+        baseUrl += '/';
+      }
+
+      const requestUrl = `${baseUrl}stations?limit=50`;
+      setStatus('loading', 'Pobieranie stacji meteorologicznych z serwera...');
+      tbody.innerHTML = '';
+      table.style.display = 'none';
+
+      try {
+        const response = await fetch(requestUrl, {
+          method: 'GET',
+          headers: {
+            'token': token
+          }
+        });
+
+        if (response.status === 401) {
+          throw new Error('401 Unauthorized: Błędny lub nieaktywny token NOAA.');
+        }
+
+        if (!response.ok) {
+          throw new Error(`Błąd HTTP ${response.status}: ${response.statusText}`);
+        }
+
+        const data = await response.json();
+        const stations = data.results;
+
+        if (!Array.isArray(stations) || stations.length === 0) {
+          setStatus('empty', 'Brak stacji w zwróconej odpowiedzi.');
+          return;
+        }
+
+        setStatus(null);
+        table.style.display = 'table';
+
+        stations.forEach(station => {
+          const row = document.createElement('tr');
+
+          const idCell = document.createElement('td');
+          idCell.textContent = station.id || 'Brak ID';
+
+          const nameCell = document.createElement('td');
+          nameCell.textContent = station.name || 'Brak nazwy';
+
+          const latCell = document.createElement('td');
+          latCell.textContent = station.latitude !== undefined ? station.latitude : 'N/A';
+
+          const lonCell = document.createElement('td');
+          lonCell.textContent = station.longitude !== undefined ? station.longitude : 'N/A';
+
+          row.append(idCell, nameCell, latCell, lonCell);
+          tbody.appendChild(row);
+        });
+
+      } catch (err) {
+        setStatus('error', `Błąd pobierania danych: ${err.message}. Upewnij się, że proxy Express działa na wskazanym porcie.`);
+      }
+    });
+
+
+</script>
+
+
+
+
 </body>
 </html>
